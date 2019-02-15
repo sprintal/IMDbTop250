@@ -3,17 +3,19 @@ import json
 import time
 from bs4 import BeautifulSoup as bs
 
-url = "https://www.imdb.com/chart/top?ref_=nv_mv_250"
-t = time.localtime(time.time())
-date = str(t.tm_year) + '-' + str(t.tm_mon) + '-' + str(t.tm_mday)
+url = "https://www.imdb.com/chart/top"
+
 with open('imdb.json', 'r') as f:
-    data = json.load(f)
+    movies = json.load(f)
+
 try:
-    # data = dict()
     r = requests.get(url)
     r.raise_for_status()
     soup = bs(r.text, "html.parser")
     table = soup.tbody.contents
+    t = time.localtime(time.time())
+    date = str(t.tm_year) + '-' + str(t.tm_mon) + '-' + str(t.tm_mday) + " " + str(t.tm_hour).zfill(2) + ":" + str(t.tm_min).zfill(2) + ":" + str(t.tm_sec).zfill(2)
+    
     for item in table:
         if type(item) is not type(table[0]):
             td = item.find('td', class_='titleColumn')
@@ -26,28 +28,25 @@ try:
             rating = item.find('td', class_='ratingColumn').get_text().strip()
             str = item.find('td', class_ = 'titleColumn').get_text().strip()
             rank = str[:str.find('.')]
-            print(name, tt, year, rating, rank)
-            if tt in data:
-                ranks = data[tt]['rank']
-                ratings = data[tt]['rating']
+
+            if tt in movies:
+                ranks = movies[tt]['rank']
+                ratings = movies[tt]['rating']
             else:
                 ranks = dict()
                 ratings = dict()
             
             ranks[date] = rank
             ratings[date] = rating
-            data[tt] = {
+            movies[tt] = {
                 'name': name,
                 'year': year,
                 'rating': ratings,
                 'rank': ranks
-
             }
-    print(data)
     
     with open('imdb.json', 'w') as f:
-        json.dump(data, f)
-
+        json.dump(movies, f)
 
 except:
     print("Failed")
